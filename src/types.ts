@@ -1,4 +1,4 @@
-import type * as z from "zod/v4";
+import type * as z from "zod";
 
 import type {
   DxtManifestAuthorSchema,
@@ -12,6 +12,7 @@ import type {
   DxtManifestScriptsSchema,
   DxtManifestServerSchema,
   DxtManifestToolSchema,
+  DxtSignatureInfoSchema,
   DxtUserConfigurationOptionSchema,
   DxtUserConfigValuesSchema,
   McpServerConfigSchema,
@@ -53,14 +54,7 @@ export type DxtManifest = z.infer<typeof DxtManifestSchema>;
 /**
  * Information about a DXT package signature
  */
-export interface DxtSignatureInfo {
-  status: "signed" | "unsigned" | "self-signed";
-  publisher?: string;
-  issuer?: string;
-  valid_from?: string;
-  valid_to?: string;
-  fingerprint?: string;
-}
+export type DxtSignatureInfo = z.infer<typeof DxtSignatureInfoSchema>;
 
 export interface Logger {
   log: (...args: unknown[]) => void;
