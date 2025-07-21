@@ -394,6 +394,58 @@ This ensures that paths work correctly regardless of where the extension is inst
 
 - **`${user_config}`**: Your extension can specify user-configured values that the implementing app will collect from users. Read on to learn more about user configuration.
 
+## Scripts (post_install, post_uninstall)
+
+The `scripts` field allows you to define commands that run at specific points in the extension's lifecycle. This is useful for tasks like installing dependencies, running database migrations, or cleaning up resources.
+
+- **post_install**: Runs after the extension is unpacked, but before the server is started for the first time.
+- **post_uninstall**: Runs when an uninstall is triggered, but **before** the extension's files are deleted. This allows the script to perform cleanup tasks, such as removing cached data or external resources.
+
+**Note:** The implementation of the `post_uninstall` hook is the responsibility of the DXT client application. This specification only defines the manifest format.
+
+### Examples
+
+**Simple `post_install` script:**
+
+```json
+{
+  "scripts": {
+    "post_install": "npm install"
+  }
+}
+```
+
+**Complex `post_install` script with arguments:**
+
+```json
+{
+  "scripts": {
+    "post_install": {
+      "command": "python",
+      "args": ["-m", "pip", "install", "-r", "requirements.txt"]
+    }
+  }
+}
+```
+
+**Platform-specific scripts:**
+
+```json
+{
+  "scripts": {
+    "post_install": {
+      "windows": "scripts\\setup.bat",
+      "darwin": "scripts/setup.sh",
+      "linux": "scripts/setup.sh"
+    },
+    "post_uninstall": {
+      "command": "python",
+      "args": ["scripts/cleanup.py", "--all"]
+    }
+  }
+}
+```
+
 ## User Configuration
 
 The `user_config` field allows extension developers to specify configuration options that can be presented to end users through the implementing app's user interface. These configurations are collected from users and passed to the MCP server at runtime.
