@@ -11,6 +11,7 @@ import { cleanDxt, validateManifest } from "../node/validate.js";
 import { initExtension } from "./init.js";
 import { packExtension } from "./pack.js";
 import { unpackExtension } from "./unpack.js";
+import { uninstallExtension } from "./uninstall.js";
 
 // ES modules equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -115,6 +116,26 @@ program
         const success = await unpackExtension({
           dxtPath: dxtFile,
           outputDir: output,
+        });
+        process.exit(success ? 0 : 1);
+      } catch (error) {
+        console.error(
+          `ERROR: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
+        process.exit(1);
+      }
+    })();
+  });
+
+// Uninstall command
+program
+  .command("uninstall <directory>")
+  .description("Uninstall a DXT extension")
+  .action((directory: string) => {
+    void (async () => {
+      try {
+        const success = await uninstallExtension({
+          extensionDir: directory,
         });
         process.exit(success ? 0 : 1);
       } catch (error) {

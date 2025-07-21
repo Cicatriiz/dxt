@@ -8,6 +8,8 @@ import type {
   DxtManifestPromptSchema,
   DxtManifestRepositorySchema,
   DxtManifestSchema,
+  DxtManifestScriptHookSchema,
+  DxtManifestScriptsSchema,
   DxtManifestServerSchema,
   DxtManifestToolSchema,
   DxtSignatureInfoSchema,
@@ -43,6 +45,9 @@ export type DxtUserConfigurationOption = z.infer<
 >;
 
 export type DxtUserConfigValues = z.infer<typeof DxtUserConfigValuesSchema>;
+
+export type DxtManifestScriptHook = z.infer<typeof DxtManifestScriptHookSchema>;
+export type DxtManifestScripts = z.infer<typeof DxtManifestScriptsSchema>;
 
 export type DxtManifest = z.infer<typeof DxtManifestSchema>;
 

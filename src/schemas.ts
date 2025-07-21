@@ -76,6 +76,28 @@ export const DxtUserConfigValuesSchema = z.record(
   z.union([z.string(), z.number(), z.boolean(), z.array(z.string())]),
 );
 
+export const DxtManifestScriptHookSchema = z.union([
+  z.string(),
+  z.object({
+    command: z.string(),
+    args: z.array(z.string()).optional(),
+  }),
+  z
+    .object({
+      windows: z.string().optional(),
+      darwin: z.string().optional(),
+      linux: z.string().optional(),
+    })
+    .refine((s) => !!s.windows || !!s.darwin || !!s.linux, {
+      message: "At least one platform-specific script must be defined.",
+    }),
+]);
+
+export const DxtManifestScriptsSchema = z.object({
+  post_install: DxtManifestScriptHookSchema.optional(),
+  post_uninstall: DxtManifestScriptHookSchema.optional(),
+});
+
 export const DxtManifestSchema = z.strictObject({
   $schema: z.string().optional(),
   dxt_version: z.string(),
@@ -102,6 +124,7 @@ export const DxtManifestSchema = z.strictObject({
   user_config: z
     .record(z.string(), DxtUserConfigurationOptionSchema)
     .optional(),
+  scripts: DxtManifestScriptsSchema.optional(),
 });
 
 export const DxtSignatureInfoSchema = z.strictObject({

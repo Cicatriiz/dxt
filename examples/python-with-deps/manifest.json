@@ -1,0 +1,22 @@
+{
+    "dxt_version": "0.1",
+    "name": "python-with-deps",
+    "version": "1.0.0",
+    "description": "An example of a Python extension with dependencies.",
+    "author": {
+        "name": "DXT"
+    },
+    "server": {
+        "type": "python",
+        "entry_point": "server/main.py",
+        "mcp_config": {
+            "command": "python",
+            "args": [
+                "server/main.py"
+            ]
+        }
+    },
+    "scripts": {
+        "post_install": "pip install --target=./site-packages -r requirements.txt"
+    }
+}

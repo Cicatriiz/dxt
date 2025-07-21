@@ -261,4 +261,135 @@ describe("DXT CLI", () => {
       }
     });
   });
+
+  describe("post-install scripts", () => {
+    const tempDir = join(__dirname, "temp-install-test");
+    const packedFilePath = join(__dirname, "test-install-extension.dxt");
+    const unpackedDir = join(__dirname, "temp-unpack-install-test");
+    const postInstallFile = join(unpackedDir, "post-install-proof.txt");
+
+    beforeEach(() => {
+      // Create a temporary directory with some files
+      fs.mkdirSync(tempDir, { recursive: true });
+      fs.mkdirSync(unpackedDir, { recursive: true });
+    });
+
+    afterEach(() => {
+      // Clean up temporary files and directories
+      fs.rmSync(tempDir, { recursive: true, force: true });
+      fs.rmSync(unpackedDir, { recursive: true, force: true });
+      if (fs.existsSync(packedFilePath)) {
+        fs.unlinkSync(packedFilePath);
+      }
+    });
+
+    it("should run a successful post-install script", () => {
+      const manifest = {
+        dxt_version: "1.0",
+        name: "Test Install Extension",
+        version: "1.0.0",
+        description: "A test extension for post-install scripts",
+        author: { name: "DXT" },
+        server: {
+          type: "node",
+          entry_point: "server/index.js",
+          mcp_config: { command: "node" },
+        },
+        scripts: {
+          post_install: `touch ${postInstallFile}`,
+        },
+      };
+      fs.writeFileSync(
+        join(tempDir, "manifest.json"),
+        JSON.stringify(manifest),
+      );
+      execSync(`node ${cliPath} pack ${tempDir} ${packedFilePath}`);
+      execSync(`node ${cliPath} unpack ${packedFilePath} ${unpackedDir}`);
+      expect(fs.existsSync(postInstallFile)).toBe(true);
+    });
+
+    it("should fail if the post-install script fails", () => {
+      const manifest = {
+        dxt_version: "1.0",
+        name: "Test Failing Install Extension",
+        version: "1.0.0",
+        description: "A test extension for failing post-install scripts",
+        author: { name: "DXT" },
+        server: {
+          type: "node",
+          entry_point: "server/index.js",
+          mcp_config: { command: "node" },
+        },
+        scripts: {
+          post_install: "exit 1",
+        },
+      };
+      fs.writeFileSync(
+        join(tempDir, "manifest.json"),
+        JSON.stringify(manifest),
+      );
+      execSync(`node ${cliPath} pack ${tempDir} ${packedFilePath}`);
+      expect(() => {
+        execSync(`node ${cliPath} unpack ${packedFilePath} ${unpackedDir}`);
+      }).toThrow();
+    });
+
+    it("should run a platform-specific script", () => {
+      const manifest = {
+        dxt_version: "1.0",
+        name: "Test Platform Install Extension",
+        version: "1.0.0",
+        description:
+          "A test extension for platform-specific post-install scripts",
+        author: { name: "DXT" },
+        server: {
+          type: "node",
+          entry_point: "server/index.js",
+          mcp_config: { command: "node" },
+        },
+        scripts: {
+          post_install: {
+            [process.platform]: `touch ${postInstallFile}`,
+          },
+        },
+      };
+      fs.writeFileSync(
+        join(tempDir, "manifest.json"),
+        JSON.stringify(manifest),
+      );
+      execSync(`node ${cliPath} pack ${tempDir} ${packedFilePath}`);
+      execSync(`node ${cliPath} unpack ${packedFilePath} ${unpackedDir}`);
+      expect(fs.existsSync(postInstallFile)).toBe(true);
+    });
+
+    it("should define a post-uninstall script", () => {
+      const manifest = {
+        dxt_version: "1.0",
+        name: "Test Uninstall Extension",
+        version: "1.0.0",
+        description: "A test extension for post-uninstall scripts",
+        author: { name: "DXT" },
+        server: {
+          type: "node",
+          entry_point: "server/index.js",
+          mcp_config: { command: "node" },
+        },
+        scripts: {
+          post_uninstall: "echo 'uninstalling'",
+        },
+      };
+      fs.writeFileSync(
+        join(tempDir, "manifest.json"),
+        JSON.stringify(manifest),
+      );
+      execSync(`node ${cliPath} pack ${tempDir} ${packedFilePath}`);
+      execSync(`node ${cliPath} unpack ${packedFilePath} ${unpackedDir}`);
+      const unpackedManifest = JSON.parse(
+        fs.readFileSync(join(unpackedDir, "manifest.json"), "utf-8"),
+      );
+      expect(unpackedManifest.scripts.post_uninstall).toBe(
+        "echo 'uninstalling'",
+      );
+    });
+  });
 });

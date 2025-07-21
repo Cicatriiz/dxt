@@ -1,3 +1,4 @@
+import { execSync } from "child_process";
 import { unzipSync } from "fflate";
 import {
   chmodSync,
@@ -9,6 +10,7 @@ import {
 import { join, resolve, sep } from "path";
 
 import { extractSignatureBlock } from "../node/sign.js";
+import { DxtManifestSchema } from "../schemas.js";
 import { getLogger } from "../shared/log.js";
 
 interface UnpackOptions {
@@ -121,6 +123,55 @@ export async function unpackExtension({
             }
           } catch (error) {
             // Silently ignore permission errors
+          }
+        }
+      }
+    }
+
+    // Run post-install script
+    const manifestPath = join(finalOutputDir, "manifest.json");
+    if (existsSync(manifestPath)) {
+      const manifestContent = readFileSync(manifestPath, "utf-8");
+      const manifest = DxtManifestSchema.parse(JSON.parse(manifestContent));
+
+      if (manifest.scripts?.post_install) {
+        logger.log("Running post-install script...");
+        const script = manifest.scripts.post_install;
+        let command: string | undefined;
+
+        if (typeof script === "string") {
+          command = script;
+        } else if (typeof script === "object") {
+          if ("command" in script && script.command) {
+            command = `${script.command} ${
+              script.args?.join(" ") ?? ""
+            }`.trim();
+          } else {
+            const platform = process.platform;
+            if (platform === "win32" && "windows" in script && script.windows) {
+              command = script.windows;
+            } else if (
+              platform === "darwin" &&
+              "darwin" in script &&
+              script.darwin
+            ) {
+              command = script.darwin;
+            } else if (
+              platform === "linux" &&
+              "linux" in script &&
+              script.linux
+            ) {
+              command = script.linux;
+            }
+          }
+        }
+
+        if (command) {
+          try {
+            execSync(command, { cwd: finalOutputDir, stdio: "inherit" });
+            logger.log("Post-install script completed successfully.");
+          } catch (error) {
+            throw new Error(`Post-install script failed: ${error}`);
           }
         }
       }
